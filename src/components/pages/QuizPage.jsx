@@ -1,27 +1,19 @@
-import { useEffect } from "react";
 import styled from "styled-components";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  setCurrQuestion,
-  setQuizQuestions,
-} from "../../redux/slice/questions.slice";
+import { setCurrQuestion } from "../../redux/slice/questions.slice";
 import Question from "../Question";
-import Score from "../Score";
-import { setMaxScore } from "../../redux/slice/score.slice";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 
 const QuizPage = () => {
   const questions = useSelector((state) => state.Questions.questions);
   const quizQuestions = useSelector((state) => state.Questions.quizQuestions);
-  const questionTimer = useSelector((state) => state.Quiz.quizTimer);
   const currQuestion = useSelector((state) => state.Questions.currQuestion);
+  const questionTimer = useSelector((state) => state.Quiz.quizTimer);
   const dispatch = useDispatch();
 
   const onTimerComplete = () => {
     dispatch(setCurrQuestion(currQuestion + 1));
   };
-
-  useEffect(() => {}, []);
 
   return (
     <QuizContainer>
@@ -42,7 +34,6 @@ const QuizPage = () => {
       {questions && (
         <Question question={quizQuestions[currQuestion]}></Question>
       )}
-      <Score></Score>
     </QuizContainer>
   );
 };
@@ -53,13 +44,15 @@ const QuizContainer = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
-  margin: auto;
   gap: 10px;
-  width: 80%;
+  width: 50%;
+  margin: auto;
+  margin-top: 50px;
 `;
 
-const QuizTitle = styled.h1`
+const QuizTitle = styled.div`
   font-size: 30px;
+  font-weight: 700;
   text-align: center;
 `;
 

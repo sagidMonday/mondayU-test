@@ -4,26 +4,32 @@ import styled from "styled-components";
 import { useHistory } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
+  setCurrQuestion,
   setQuestions,
   setQuizQuestions,
 } from "../../redux/slice/questions.slice";
-import { setMaxScore } from "../../redux/slice/score.slice";
-import { setQuizTimer } from "../../redux/slice/quiz.slice";
+import { setMaxScore, setCurrScore } from "../../redux/slice/score.slice";
+import {
+  setQuizTimer,
+  setQuizNumOfQuestions,
+} from "../../redux/slice/quiz.slice";
+import { EASY_POINTS, HARD_POINTS, MEDIUM_POINTS } from "../../constants";
+import { shuffle, stringParser } from "../../common/helper-functions";
 
-const EASY_POINTS = 5;
-const MEDIUM_POINTS = 10;
-const HARD_POINTS = 15;
+const welcomeMessage = "Welcome to online quiz!";
+const introText = "Join us to our Quiz game and test your knowledge";
 
 const WelcomePage = () => {
   const questions = useSelector((state) => state.Questions.questions);
+  const numOfQuestions = useSelector((state) => state.Quiz.quizNumOfQuestions);
   const dispatch = useDispatch();
   const history = useHistory();
 
   const filterQuestions = (numberOfQues) => {
     const quizQuestions = [];
-    const easyQuestions = Math.floor(numberOfQues * 0.4);
-    const mediumQuestions = Math.floor(numberOfQues * 0.4);
-    const hardQuestions = numberOfQues - mediumQuestions - easyQuestions;
+    let easyQuestions = Math.floor(numberOfQues * 0.4);
+    let mediumQuestions = Math.floor(numberOfQues * 0.4);
+    let hardQuestions = numberOfQues - mediumQuestions - easyQuestions;
     const maxScore =
       easyQuestions * EASY_POINTS +
       mediumQuestions * MEDIUM_POINTS +
@@ -48,7 +54,25 @@ const WelcomePage = () => {
   };
 
   const onSelectTime = (event) => {
-    dispatch(setQuizTimer(event.target.value));
+    dispatch(setQuizTimer(parseInt(event.target.value)));
+  };
+
+  const onStartClicked = () => {
+    console.log("clicked!");
+    history.push("/quiz");
+  };
+
+  const onSelectNumOfQuestion = (event) => {
+    debugger;
+    dispatch(setQuizNumOfQuestions(parseInt(event.target.value)));
+  };
+
+  const clearStore = () => {
+    dispatch(setMaxScore(0));
+    dispatch(setCurrQuestion(0));
+    dispatch(setCurrScore(0));
+    dispatch(setQuizNumOfQuestions(20));
+    dispatch(setQuizTimer(15));
   };
 
   useEffect(() => {
@@ -57,84 +81,129 @@ const WelcomePage = () => {
         .then((response) => response.json())
         .then((data) => {
           const res = data.results.map((question) => {
-            question.answers = question.incorrect_answers.concat(
-              question.correct_answer
-            );
+            question.question = stringParser(question.question);
+            let questionBeforeShuffle = question.incorrect_answers
+              .concat(question.correct_answer)
+              .map((question) => {
+                return stringParser(question);
+              });
+            question.answers = shuffle(questionBeforeShuffle);
             return question;
           });
           dispatch(setQuestions(res));
         });
     };
+    clearStore();
     fetchApi();
   }, []);
 
   useEffect(() => {
-    filterQuestions(23);
-  }, [questions]);
-
-  const onStartClicked = () => {
-    console.log("clicked!");
-    history.push("/quiz");
-  };
+    filterQuestions(numOfQuestions);
+  }, [questions, numOfQuestions]);
 
   return (
-    <WelcomeContainer>
-      <WelcomeTitle>Welcome to online quiz!</WelcomeTitle>
-      <WelcomeText>
-        Join us to our Quiz game and test your knowledge
-      </WelcomeText>
-      <SectionTitle>Choose your Question Timer</SectionTitle>
-      <SelectContainer
-        defaultValue={15}
-        onChange={(event) => {
-          onSelectTime(event);
-        }}
-      >
-        <OptionContainer value={5}>5</OptionContainer>
-        <OptionContainer value={10}>10</OptionContainer>
-        <OptionContainer value={15}>15</OptionContainer>
-      </SelectContainer>
-      <StartButton onClick={onStartClicked}>Let's Start!</StartButton>
-    </WelcomeContainer>
+    <PageContainer>
+      <WelcomeTitle>{welcomeMessage}</WelcomeTitle>
+      <WelcomeContainer>
+        <WelcomeText>{introText}</WelcomeText>
+        <SetTimerSection>
+          <SectionTitle>Choose your Question Timer</SectionTitle>
+          <SelectContainer
+            defaultValue={15}
+            onChange={(event) => {
+              onSelectTime(event);
+            }}
+          >
+            <OptionContainer value={10}>10</OptionContainer>
+            <OptionContainer value={15}>15</OptionContainer>
+            <OptionContainer value={20}>20</OptionContainer>
+          </SelectContainer>
+        </SetTimerSection>
+        <SetNumOfQuestion>
+          <SectionTitle>Choose number of questions in quiz</SectionTitle>
+          <SelectContainer
+            defaultValue={20}
+            onChange={(event) => {
+              onSelectNumOfQuestion(event);
+            }}
+          >
+            <OptionContainer value={10}>10</OptionContainer>
+            <OptionContainer value={15}>15</OptionContainer>
+            <OptionContainer value={20}>20</OptionContainer>
+          </SelectContainer>
+        </SetNumOfQuestion>
+        <StartButton onClick={onStartClicked}>Let's Start!</StartButton>
+      </WelcomeContainer>
+    </PageContainer>
   );
 };
 
 export default WelcomePage;
 
+const PageContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 50%;
+  margin: auto;
+  margin-top: 50px;
+`;
+
 const WelcomeContainer = styled.div`
   display: flex;
-  margin: 10px;
   flex-direction: column;
   height: 300px;
-  width: 90%;
+  border-radius: 5px;
+  width: 100%;
   margin: auto;
-  background-color: grey;
-  margin-top: 200px;
+  background-color: #175e17;
+  box-shadow: rgb(0 0 0 / 35%) 0px 5px 15px;
 `;
 
 const WelcomeTitle = styled.div`
-  font-size: 18px;
+  font-size: 30px;
+  font-weight: 500;
   text-align: center;
   letter-spacing: 0.5px;
-  color: white;
+  color: black;
+  margin-bottom: 20px;
 `;
 
 const WelcomeText = styled.div`
-  font-size: 14px;
-  text-align: center;
-  letter-spacing: 0.5px;
+  width: 80%;
+  margin: auto;
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 500;
   color: white;
 `;
 
+const SetNumOfQuestion = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-left: 10px;
+`;
+
+const SetTimerSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-left: 10px;
+`;
+
 const SectionTitle = styled.div`
-  font-size: 15px;
-  margin-bottom: 10px;
+  font-size: 20px;
+  font-weight: 500;
+  width: 80%;
+  margin: auto;
+  color: white;
   align-self: baseline;
 `;
 
 const SelectContainer = styled.select`
   width: 10%;
-  align-self: baseline;
   border-radius: 5px;
   height: 30px;
 `;
@@ -144,11 +213,13 @@ const OptionContainer = styled.option`
 `;
 
 const StartButton = styled.button`
+  height: 40px;
   width: 30%;
   margin: auto;
-  font-size: 14px;
-  text-align: center;
-  letter-spacing: 0.5px;
-  color: white;
-  background-color: blue;
+  font-weight: 600;
+  background-color: white;
+  border-color: black;
+  font-size: 16px;
+  border-radius: 5px;
+  color: black;
 `;

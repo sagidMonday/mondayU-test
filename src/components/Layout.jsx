@@ -1,6 +1,7 @@
 import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
 import QuizPage from "./pages/QuizPage";
 import WelcomePage from "./pages/WelcomePage";
+import ScorePage from "./pages/ScorePage";
 
 const Layout = () => {
   return (
@@ -13,6 +14,9 @@ const Layout = () => {
             </Route>
             <Route path="/quiz">
               <QuizPage />
+            </Route>
+            <Route path="/score">
+              <ScorePage />
             </Route>
             <Redirect from="/" to="/home" exact />
           </Switch>
